@@ -14,7 +14,7 @@ def filter_env():
         return sorted(os.environ.items())
 
 def main():
-    result = print_env()
+    result = filter_env()
     print(result)
 
 if __name__ == "__main__":
