@@ -37,8 +37,6 @@ def mediaconvert():
             )
         else:
             program = "ffmpeg"
-            # -y to overwrite existing files, -i to mark file_path as input
-            # ffmpeg treats output_path as it's last argument and it doesn't have flags attached to it
             subprocess.run(
                 [program, "-y", "-i", file_path, output_path],
                 stdout=subprocess.DEVNULL,
