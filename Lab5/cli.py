@@ -7,6 +7,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from parseFiles import parse_metadata
+from anomalyDetection import detect_anomalies
 
 
 def _setup_logging():
@@ -182,6 +183,20 @@ def execute_stats(station_code, measurements, measure, freq):
     print(f"Mean: {mean_val:.4f}")
     print(f"Standard Deviation: {stdev_val:.4f}")
 
+def execute_anomaly(measurements, threshold_delta, alarm_limit, inv_val_limit, delta_limit):
+    if not measurements:
+        logger.warning("No measurements available for anomaly detection.")
+        return
+
+    anomalies = detect_anomalies(measurements, threshold_delta=threshold_delta, alarm_limit=alarm_limit, inv_val_limit=inv_val_limit, delta_limit=delta_limit)
+
+    if not anomalies:
+        logger.debug("No anomalies detected.")
+        return
+
+    for anomaly in anomalies:
+        logger.warning(anomaly)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Air Quality Data CLI")
@@ -198,6 +213,12 @@ def main():
     stats_parser = subparsers.add_parser('stats')
     stats_parser.add_argument('--station', required=True)
 
+    anomaly_parser = subparsers.add_parser('anomaly')
+    anomaly_parser.add_argument('--station', default=None)
+    anomaly_parser.add_argument('--threshold-delta', type=float, default=100.0)
+    anomaly_parser.add_argument('--alarm-limit', type=float, default=500.0)
+    anomaly_parser.add_argument('--inv-val-limit', type=int, default=1000)
+    anomaly_parser.add_argument('--delta-limit', type=int, default=1000)
     args = parser.parse_args()
 
     year = args.start.split('-')[0]
@@ -229,7 +250,9 @@ def main():
     elif args.command == 'stats':
         measurements = load_measurements(file_path, args.start, args.end, args.measure, args.station)
         execute_stats(args.station, measurements, args.measure, args.freq)
-
+    elif args.command == 'anomaly':
+        measurements = load_measurements(file_path, args.start, args.end, args.measure, args.station)
+        execute_anomaly(measurements, args.threshold_delta, args.alarm_limit, args.inv_val_limit, args.delta_limit)
 
 if __name__ == "__main__":
     main()

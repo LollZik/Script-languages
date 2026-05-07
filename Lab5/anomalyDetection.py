@@ -21,9 +21,9 @@ def detect_anomalies(measurements, threshold_delta=100.0, alarm_limit=500.0, inv
 
         prev_val = val
 
-    if delta_count > 0:
+    if delta_count > delta_limit:
         anomalies.append(f"Zbyt częste skoki wartości - {delta_count}")
-    if inv_val_count > 0:
+    if inv_val_count > inv_val_limit:
         anomalies.append(f"Zbyt wiele błędnych wartości - {inv_val_count}")
     return anomalies
 

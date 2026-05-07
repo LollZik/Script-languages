@@ -3,15 +3,20 @@
 Usage:
   docoptCLI.py --measure=<measure> --freq=<freq> --start=<date> --end=<date> random
   docoptCLI.py --measure=<measure> --freq=<freq> --start=<date> --end=<date> stats --station=<station>
+  docoptCLI.py --measure=<measure> --freq=<freq> --start=<date> --end=<date> anomaly [--station=<station>] [--threshold-delta=<td>] [--alarm-limit=<al>] [--inv-val-limit=<il>] [--delta-limit=<dl>]
   docoptCLI.py (-h | --help)
 
 Options:
-  --measure=<measure>    Measured quantity (e.g. PM10, PM25, NO2).
-  --freq=<freq>          Measurement frequency (1g, 24g, 1m).
-  --start=<date>         Start date in YYYY-MM-DD format.
-  --end=<date>           End date in YYYY-MM-DD format.
-  --station=<station>    Station code (required for stats subcommand).
-  -h --help              Show this help message.
+  --measure=<measure>        Measured quantity (e.g. PM10, PM25, NO2).
+  --freq=<freq>              Measurement frequency (1g, 24g, 1m).
+  --start=<date>             Start date in YYYY-MM-DD format.
+  --end=<date>               End date in YYYY-MM-DD format.
+  --station=<station>        Station code (required for stats, optional for anomaly).
+  --threshold-delta=<td>     Max allowed delta between consecutive values [default: 100.0].
+  --alarm-limit=<al>         Alarm threshold for single measurement value [default: 500.0].
+  --inv-val-limit=<il>       Max allowed invalid values before triggering anomaly [default: 1000].
+  --delta-limit=<dl>         Max allowed delta spikes before triggering anomaly [default: 1000].
+  -h --help                  Show this help message.
 """
 
 import csv
@@ -22,6 +27,7 @@ from pathlib import Path
 
 from docopt import docopt
 from parseFiles import parse_metadata
+from anomalyDetection import detect_anomalies
 
 
 VALID_MEASURES = [
@@ -135,6 +141,21 @@ def execute_stats(station_code, measurements):
     print(f"Standard Deviation: {stdev_val:.4f}")
 
 
+def execute_anomaly(measurements, threshold_delta, alarm_limit, inv_val_limit, delta_limit):
+    if not measurements:
+        print("No measurements available for anomaly detection.")
+        return
+
+    anomalies = detect_anomalies(measurements, threshold_delta=threshold_delta, alarm_limit=alarm_limit, inv_val_limit=inv_val_limit, delta_limit=delta_limit)
+
+    if not anomalies:
+        print("No anomalies detected.")
+        return
+
+    for anomaly in anomalies:
+        print(anomaly)
+
+
 def main():
     args = docopt(__doc__)
 
@@ -165,6 +186,13 @@ def main():
     elif args['stats']:
         measurements = load_measurements(file_path, start, end, args['--station'])
         execute_stats(args['--station'], measurements)
+    elif args['anomaly']:
+        threshold_delta = float(args['--threshold-delta'])
+        alarm_limit = float(args['--alarm-limit'])
+        inv_val_limit = int(args['--inv-val-limit'])
+        delta_limit = int(args['--delta-limit'])
+        measurements = load_measurements(file_path, start, end, args['--station'])
+        execute_anomaly(measurements, threshold_delta, alarm_limit, inv_val_limit, delta_limit)
 
 
 if __name__ == "__main__":
