@@ -1,6 +1,7 @@
 import argparse
 import csv
 import logging
+import math
 import random
 import statistics
 import sys
@@ -107,6 +108,7 @@ def load_measurements(file_path, start_date, end_date, measure, station_code=Non
             logger.info("Closed file: %s  (0 data rows processed)", file_path)
             return measurements
 
+        # Find only the stations we seek
         station_indices = [
             i for i in range(1, len(header_kody_stacji))
             if station_code is None or header_kody_stacji[i] == station_code
@@ -197,6 +199,20 @@ def execute_anomaly(measurements, threshold_delta, alarm_limit, inv_val_limit, d
     for anomaly in anomalies:
         logger.warning(anomaly)
 
+def execute_best(measurements):
+    headers = [m[2] for m in measurements]
+    headers = set(headers)
+    best_mean = math.inf
+    best_station = ""
+    for h in headers:
+        station_vals = [m[1] for m in measurements if m[2] == h]
+        mean_val = statistics.mean(station_vals)
+        if mean_val < best_mean:
+            best_mean = mean_val
+            best_station = h
+
+    print(f"Best station found: {best_station}")
+    print(f"Mean: {best_mean:.4f}")
 
 def main():
     parser = argparse.ArgumentParser(description="Air Quality Data CLI")
@@ -219,6 +235,8 @@ def main():
     anomaly_parser.add_argument('--alarm-limit', type=float, default=500.0)
     anomaly_parser.add_argument('--inv-val-limit', type=int, default=1000)
     anomaly_parser.add_argument('--delta-limit', type=int, default=1000)
+
+    anomaly_parser = subparsers.add_parser('best-station')
     args = parser.parse_args()
 
     year = args.start.split('-')[0]
@@ -253,6 +271,9 @@ def main():
     elif args.command == 'anomaly':
         measurements = load_measurements(file_path, args.start, args.end, args.measure, args.station)
         execute_anomaly(measurements, args.threshold_delta, args.alarm_limit, args.inv_val_limit, args.delta_limit)
+    elif args.command == 'best-station':
+        measurements = load_measurements(file_path, args.start, args.end, args.measure, None)
+        execute_best(measurements)
 
 if __name__ == "__main__":
     main()
