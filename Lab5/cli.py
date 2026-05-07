@@ -1,9 +1,11 @@
 import argparse
 import csv
 import logging
+import math
 import random
 import statistics
 import sys
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from parseFiles import parse_metadata
@@ -197,6 +199,21 @@ def execute_anomaly(measurements, threshold_delta, alarm_limit, inv_val_limit, d
     for anomaly in anomalies:
         logger.warning(anomaly)
 
+def execute_best_station(measurements):
+    stations = defaultdict(list)
+    for m in measurements:
+        stations[m[2]].append(m[1])
+
+    minmean = math.inf
+    minstation = ""
+    for key, m in stations.items():
+        mean = statistics.mean(m)
+        if minmean > mean:
+            minmean = mean
+            minstation = key
+
+    print(minmean)
+    print(minstation)
 
 def main():
     parser = argparse.ArgumentParser(description="Air Quality Data CLI")
@@ -207,6 +224,8 @@ def main():
     parser.add_argument('--end', type=validate_date, required=True)
 
     subparsers = parser.add_subparsers(dest='command', required=True)
+
+    subparsers.add_parser("best-station")
 
     subparsers.add_parser('random')
 
@@ -243,8 +262,10 @@ def main():
         }
         for s in raw_meta if s.get('kodStacji')
     }
-
-    if args.command == 'random':
+    if args.command == 'best-station':
+        measurements = load_measurements(file_path, args.start, args.end, args.measure)
+        execute_best_station(measurements)
+    elif args.command == 'random':
         measurements = load_measurements(file_path, args.start, args.end, args.measure)
         execute_random(stations_meta, measurements, args.measure, args.freq)
     elif args.command == 'stats':
