@@ -7,9 +7,7 @@ from collections import defaultdict
 from typing import Optional
 
 from TimeSeries import TimeSeries
-from SeriesValidator import ThresholdDetector, OutlierDetector, ZeroSpikeDetector
-from SimpleReporter import SimpleReporter
-
+from SeriesValidator import SeriesValidator,ThresholdDetector, OutlierDetector, ZeroSpikeDetector
 
 def parse_value(raw: str) -> Optional[float]:
     raw = raw.strip()
@@ -69,8 +67,8 @@ class Measurements:
                 except ValueError:
                     continue
                 for i in range(1, len(row)):
-                    if stations[i].strip():
-                        key = (stations[i].strip(), params[i].strip(), avgs[i].strip())
+                    if stations:
+                        key = (stations, params, avgs)
                         data[key][0].append(dt)
                         data[key][1].append(parse_value(row[i]))
 
@@ -80,7 +78,7 @@ class Measurements:
 
         self.loaded_files.add(file_path)
 
-    def _ensure_loaded(self, key: tuple):
+    def ensure_loaded(self, key: tuple):
         if key not in self.loaded and key in self.registry:
             self.load_file(self.registry[key][0])
 
@@ -97,19 +95,19 @@ class Measurements:
     def get_by_parameter(self, param_name: str) -> list[TimeSeries]:
         keys = [k for k in self.registry if k[1] == param_name]
         for k in keys:
-            self._ensure_loaded(k)
+            self.ensure_loaded(k)
         return [self.loaded[k] for k in keys if k in self.loaded]
 
     def get_by_station(self, station_code: str) -> list[TimeSeries]:
         keys = [k for k in self.registry if k[0] == station_code]
         for k in keys:
-            self._ensure_loaded(k)
+            self.ensure_loaded(k)
         return [self.loaded[k] for k in keys if k in self.loaded]
 
     def __repr__(self) -> str:
         return f"Measurements(directory={self.directory!r}, registered={len(self.registry)}, loaded={len(self.loaded)})"
 
-    def detect_all_anomalies(self, validators: list, preload: bool = False) -> dict[str, list[str]]:
+    def detect_all_anomalies(self, validators: list[SeriesValidator], preload: bool = False) -> dict[str, list[str]]:
         if preload:
             self.preload_all()
         results = {}
@@ -144,8 +142,7 @@ if __name__ == "__main__":
     validators = [
         ThresholdDetector(threshold=100.0),
         OutlierDetector(k=3.0),
-        ZeroSpikeDetector(),
-        SimpleReporter()]
+        ZeroSpikeDetector()]
 
     print("\n=== detect_all_anomalies ===")
     anomalies = m.detect_all_anomalies(validators, preload=False)
