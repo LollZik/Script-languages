@@ -5,7 +5,8 @@ class SimpleReporter:
     def analyze(self, series: 'TimeSeries') -> list[str]:
         result = []
         mean = series.mean
-        result.append(f"Info: {series.parameter_name} at {series.station_code} has mean = {mean:.4f}")
+        mean_str = f"{mean:.4f}" if mean is not None else "N/A"
+        result.append(f"Info: {series.parameter_name} at {series.station_code} has mean = {mean_str}")
         return result
 
 if __name__ == "__main__":

@@ -41,6 +41,8 @@ class ZeroSpikeDetector(SeriesValidator):
                 if count >= 3:
                     anomalies.append(f"{count} zeros/missing values starting at {series.dates[i - count]}")
                 count = 0
+        if count >= 3:
+            anomalies.append(f"{count} zeros/missing values starting at {series.dates[len(series.dates) - count]}")
         return anomalies
 
 
