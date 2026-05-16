@@ -54,6 +54,19 @@ class TimeSeries:
 
         return statistics.stdev(valid_values)
 
+    def __add__(self, other):
+        if isinstance(other, TimeSeries):
+            if self.parameter_name == other.parameter_name and self.station_code == other.station_code and self.averaging_time == other.averaging_time:
+                date = self.dates + other.dates
+                value = self.values + other.values
+                ts = TimeSeries(parameter_name=self.parameter_name, station_code=self.station_code,
+                                averaging_time=self.averaging_time, dates=date, values=value, unit=self.unit)
+                return ts
+            else:
+                raise ValueError
+        else:
+            raise TypeError
+
 if __name__ == "__main__":
     base_time = datetime.datetime(2023, 1, 1, 12, 0)
     dates = [base_time + datetime.timedelta(hours=i) for i in range(5)]
@@ -68,10 +81,38 @@ if __name__ == "__main__":
         unit="ug/m3"
     )
 
-    print("Indeks 1:", ts[1])
-    print("Wycinek 0:3:", ts[0:3])
-    print("Dokładny czas:", ts[dates[0]])
-    print("Cały dzień:", ts[datetime.date(2023, 1, 1)])
+    # print("Indeks 1:", ts[1])
+    # print("Wycinek 0:3:", ts[0:3])
+    # print("Dokładny czas:", ts[dates[0]])
+    # print("Cały dzień:", ts[datetime.date(2023, 1, 1)])
+    #
+    # print("Średnia (mean):", ts.mean)
+    # print("Odchylenie (stddev):", ts.stddev)
 
-    print("Średnia (mean):", ts.mean)
-    print("Odchylenie (stddev):", ts.stddev)
+    base_time2 = datetime.datetime(2023, 2, 2, 12, 0)
+    dates2 = [base_time2 + datetime.timedelta(hours=i) for i in range(5)]
+    values2 = [7.0, 3.3, 2.0, 0.0, None]
+
+    ts2 = TimeSeries(
+        parameter_name="PM10",
+        station_code="DzWroBarto",
+        averaging_time="1g",
+        dates=dates2,
+        values=values2,
+        unit="ug/m3"
+    )
+
+    ts3 = TimeSeries(
+        parameter_name="PM2",
+        station_code="AAAAA",
+        averaging_time="1g",
+        dates=dates,
+        values=values,
+        unit="ug/m3"
+    )
+
+    ts4 = ts + ts2
+    print(ts4.dates)
+    print(ts4.values)
+
+    ts5 = ts + ts3
