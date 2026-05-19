@@ -1,5 +1,6 @@
 import logging
 import time
+from functools import wraps
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -9,16 +10,17 @@ logging.basicConfig(
 def log(level=logging.INFO):
     def decorator(obj):
         if isinstance(obj, type):
-            def class_wrapper(*args, **kwargs):
+            og = obj.__init__
+            @wraps(og)
+            def class_wrapper(self, *args, **kwargs):
                 logging.log(level,f"Instancjonowanie klasy: {obj.__name__} z argumentami: args={args}, kwargs={kwargs}")
-                return obj(*args, **kwargs)
+                og(self, *args, **kwargs)
 
-            class_wrapper.__name__ = obj.__name__
-            class_wrapper.__doc__ = obj.__doc__
-
-            return class_wrapper
+            obj.__init__ = class_wrapper
+            return obj
 
         else:
+            @wraps(obj)
             def function_wrapper(*args, **kwargs):
                 czas_wywolania = time.strftime("%Y-%m-%d %H:%M:%S")
                 start_time = time.perf_counter()
@@ -37,9 +39,6 @@ def log(level=logging.INFO):
                 )
                 logging.log(level, msg)
                 return result
-
-            function_wrapper.__name__ = obj.__name__
-            function_wrapper.__doc__ = obj.__doc__
 
             return function_wrapper
 
