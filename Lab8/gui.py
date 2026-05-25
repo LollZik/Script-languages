@@ -1,7 +1,9 @@
 import sys
+from PySide6.QtCore import QDate
 from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton,
                                QVBoxLayout, QHBoxLayout, QWidget, QFileDialog,
-                               QListWidget, QMessageBox, QLabel, QLineEdit, QFormLayout)
+                               QListWidget, QMessageBox, QLabel, QLineEdit,
+                               QFormLayout, QDateEdit)
 from readLog import read_log_file
 
 
@@ -16,9 +18,22 @@ class LogBrowser(QMainWindow):
 
         left_layout = QVBoxLayout()
         self.open_button = QPushButton("Load logs file")
+
+        filter_layout = QHBoxLayout()
+        self.from_date_edit = QDateEdit()
+        self.from_date_edit.setCalendarPopup(True)
+        self.to_date_edit = QDateEdit()
+        self.to_date_edit.setCalendarPopup(True)
+
+        filter_layout.addWidget(QLabel("From:"))
+        filter_layout.addWidget(self.from_date_edit)
+        filter_layout.addWidget(QLabel("To:"))
+        filter_layout.addWidget(self.to_date_edit)
+
         self.log_list = QListWidget()
 
         left_layout.addWidget(self.open_button)
+        left_layout.addLayout(filter_layout)
         left_layout.addWidget(self.log_list)
 
         main_layout.addLayout(left_layout, stretch=2)
@@ -63,6 +78,8 @@ class LogBrowser(QMainWindow):
         self.open_button.clicked.connect(self.load_file)
 
         self.log_list.currentRowChanged.connect(self.display_details)
+        self.from_date_edit.dateChanged.connect(self.filter_logs)
+        self.to_date_edit.dateChanged.connect(self.filter_logs)
 
     def load_file(self):
         filepath, _ = QFileDialog.getOpenFileName(self, "Select the logs file", "", "All Files (*);;Log Files (*.log)")
@@ -78,10 +95,39 @@ class LogBrowser(QMainWindow):
                 QMessageBox.critical(self, "Error", f"Couldn't load file:\n{error}")
             elif logs:
                 self.logs = logs
-                for log in self.logs:
-                    self.log_list.addItem(log["master_text"])
+                if self.logs:
+                    all_dates = [log["datetime"].date() for log in self.logs]
+                    min_date = min(all_dates)
+                    max_date = max(all_dates)
+
+                    self.from_date_edit.blockSignals(True)
+                    self.to_date_edit.blockSignals(True)
+
+                    self.from_date_edit.setDate(QDate(min_date.year, min_date.month, min_date.day))
+                    self.to_date_edit.setDate(QDate(max_date.year, max_date.month, max_date.day))
+
+                    self.from_date_edit.blockSignals(False)
+                    self.to_date_edit.blockSignals(False)
+
+                self.filter_logs()
             else:
                 QMessageBox.warning(self, "No data", "File is empty or unsupported.")
+
+    def filter_logs(self):
+        self.log_list.clear()
+        self.clear_details()
+        self.filtered_logs = []
+
+        start_date = self.from_date_edit.date().toPython()
+        end_date = self.to_date_edit.date().toPython()
+
+        for log in self.logs:
+            log_date = log["datetime"].date()
+
+            if start_date <= log_date <= end_date:
+                self.filtered_logs.append(log)
+                self.log_list.addItem(log["master_text"])
+
 
     def display_details(self, row):
         if 0 <= row < len(self.logs):

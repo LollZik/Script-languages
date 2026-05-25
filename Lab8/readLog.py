@@ -35,7 +35,8 @@ def read_log_file(filepath):
                         "time": ts.strftime('%H:%M:%S'),
                         "method": method,
                         "resource": uri,
-                        "status": str(status)
+                        "status": str(status),
+                        "datetime": ts
                     }
                     log_data.append(log_entry)
                 except (ValueError, IndexError):
