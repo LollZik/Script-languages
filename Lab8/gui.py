@@ -13,6 +13,7 @@ class LogBrowser(QMainWindow):
         self.setWindowTitle("Log Browser")
         self.resize(950, 600)
         self.logs = []
+        self.filtered_logs = []
 
         main_layout = QHBoxLayout()
 
@@ -38,9 +39,9 @@ class LogBrowser(QMainWindow):
 
         main_layout.addLayout(left_layout, stretch=2)
 
-
         right_widget = QWidget()
-        detail_layout = QFormLayout(right_widget)
+        right_main_layout = QVBoxLayout(right_widget)
+        detail_layout = QFormLayout()
 
         self.host_input = QLineEdit()
         self.host_input.setReadOnly(True)
@@ -68,6 +69,19 @@ class LogBrowser(QMainWindow):
         detail_layout.addRow("Resource:", self.resource_input)
         detail_layout.addRow("Status code:", self.status_input)
 
+        nav_layout = QHBoxLayout()
+        self.prev_button = QPushButton("Previous")
+        self.next_button = QPushButton("Next")
+
+        self.prev_button.setEnabled(False)
+        self.next_button.setEnabled(False)
+
+        nav_layout.addWidget(self.prev_button)
+        nav_layout.addWidget(self.next_button)
+
+        right_main_layout.addLayout(detail_layout)
+        right_main_layout.addStretch()
+        right_main_layout.addLayout(nav_layout)
 
         main_layout.addWidget(right_widget, stretch=1)
 
@@ -80,6 +94,9 @@ class LogBrowser(QMainWindow):
         self.log_list.currentRowChanged.connect(self.display_details)
         self.from_date_edit.dateChanged.connect(self.filter_logs)
         self.to_date_edit.dateChanged.connect(self.filter_logs)
+
+        self.prev_button.clicked.connect(self.go_previous)
+        self.next_button.clicked.connect(self.go_next)
 
     def load_file(self):
         filepath, _ = QFileDialog.getOpenFileName(self, "Select the logs file", "", "All Files (*);;Log Files (*.log)")
@@ -127,11 +144,14 @@ class LogBrowser(QMainWindow):
             if start_date <= log_date <= end_date:
                 self.filtered_logs.append(log)
                 self.log_list.addItem(log["master_text"])
-
+        if self.log_list.count() > 0:
+            self.log_list.setCurrentRow(0)
+        else:
+            self.update_nav_buttons()
 
     def display_details(self, row):
-        if 0 <= row < len(self.logs):
-            log = self.logs[row]
+        if 0 <= row < len(self.filtered_logs):
+            log = self.filtered_logs[row]
             self.host_input.setText(log["remote_host"])
             self.date_input.setText(log["date"])
             self.time_input.setText(log["time"])
@@ -140,6 +160,7 @@ class LogBrowser(QMainWindow):
             self.status_input.setText(log["status"])
         else:
             self.clear_details()
+        self.update_nav_buttons()
 
     def clear_details(self):
         self.host_input.clear()
@@ -148,6 +169,27 @@ class LogBrowser(QMainWindow):
         self.method_input.clear()
         self.resource_input.clear()
         self.status_input.clear()
+
+    def go_previous(self):
+        current_row = self.log_list.currentRow()
+        if current_row > 0:
+            self.log_list.setCurrentRow(current_row - 1)
+
+    def go_next(self):
+        current_row = self.log_list.currentRow()
+        if current_row < self.log_list.count() - 1:
+            self.log_list.setCurrentRow(current_row + 1)
+
+    def update_nav_buttons(self):
+        current_row = self.log_list.currentRow()
+        total_items = self.log_list.count()
+
+        if total_items == 0:
+            self.prev_button.setEnabled(False)
+            self.next_button.setEnabled(False)
+        else:
+            self.prev_button.setEnabled(current_row > 0)
+            self.next_button.setEnabled(current_row < total_items - 1)
 
 
 if __name__ == "__main__":
