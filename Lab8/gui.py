@@ -39,8 +39,9 @@ class LogBrowser(QMainWindow):
 
         main_layout.addLayout(left_layout, stretch=2)
 
-        right_widget = QWidget()
-        right_main_layout = QVBoxLayout(right_widget)
+        #right_widget = QWidget()
+        #right_main_layout = QVBoxLayout(right_widget)
+        right_main_layout = QVBoxLayout()
         detail_layout = QFormLayout()
 
         self.host_input = QLineEdit()
@@ -83,7 +84,8 @@ class LogBrowser(QMainWindow):
         right_main_layout.addStretch()
         right_main_layout.addLayout(nav_layout)
 
-        main_layout.addWidget(right_widget, stretch=1)
+        #main_layout.addWidget(right_widget, stretch=1)
+        main_layout.addLayout(right_main_layout, stretch=1)
 
         container = QWidget()
         container.setLayout(main_layout)
