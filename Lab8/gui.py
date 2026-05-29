@@ -3,7 +3,7 @@ from PySide6.QtCore import QDate
 from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton,
                                QVBoxLayout, QHBoxLayout, QWidget, QFileDialog,
                                QListWidget, QMessageBox, QLabel, QLineEdit,
-                               QFormLayout, QDateEdit)
+                               QFormLayout, QDateEdit, QCheckBox)
 from readLog import read_log_file
 
 
@@ -25,11 +25,15 @@ class LogBrowser(QMainWindow):
         self.from_date_edit.setCalendarPopup(True)
         self.to_date_edit = QDateEdit()
         self.to_date_edit.setCalendarPopup(True)
+        self.correct_checkbox = QCheckBox()
+        self.correct_checkbox.setChecked(False)
 
         filter_layout.addWidget(QLabel("From:"))
         filter_layout.addWidget(self.from_date_edit)
         filter_layout.addWidget(QLabel("To:"))
         filter_layout.addWidget(self.to_date_edit)
+        filter_layout.addWidget(QLabel("Correct:"))
+        filter_layout.addWidget(self.correct_checkbox)
 
         self.log_list = QListWidget()
 
@@ -96,6 +100,7 @@ class LogBrowser(QMainWindow):
         self.log_list.currentRowChanged.connect(self.display_details)
         self.from_date_edit.dateChanged.connect(self.filter_logs)
         self.to_date_edit.dateChanged.connect(self.filter_logs)
+        self.correct_checkbox.stateChanged.connect(self.filter_logs)
 
         self.prev_button.clicked.connect(self.go_previous)
         self.next_button.clicked.connect(self.go_next)
@@ -139,11 +144,13 @@ class LogBrowser(QMainWindow):
 
         start_date = self.from_date_edit.date().toPython()
         end_date = self.to_date_edit.date().toPython()
+        correct_checkbox = self.correct_checkbox.isChecked()
 
         for log in self.logs:
             log_date = log["datetime"].date()
+            log_status = int(log["status"])
 
-            if start_date <= log_date <= end_date:
+            if start_date <= log_date <= end_date and (log_status == 200 or not correct_checkbox):
                 self.filtered_logs.append(log)
                 self.log_list.addItem(log["master_text"])
         if self.log_list.count() > 0:
