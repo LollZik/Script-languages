@@ -64,7 +64,7 @@ class TimeSeries:
         return self.unit
 
     @getUnit.setter
-    def setUnit(self, newUnit : str) -> None:
+    def getUnit(self, newUnit : str) -> None:
         if newUnit not in unitDict:
             raise ValueError("Wrong unit")
         else:
@@ -76,8 +76,10 @@ class TimeSeries:
                 elif multiplier < 0:
                     multiplier = 0.001 ** multiplier
                 for i in range(len(self.values)):
-                    if self.values[i] != None:
-                        self.values[i] = self.values[i] * multiplier
+                    value = self.values[i]
+                    if value is not None:
+                        value = value * multiplier
+                        self.values[i] = value
 
     def __add__(self, other : 'TimeSeries') -> 'TimeSeries':
         if isinstance(other, TimeSeries):
@@ -108,7 +110,7 @@ if __name__ == "__main__":
 
     print(ts.getUnit)
     print(ts.values)
-    ts.setUnit("ng/m3")
+    ts.getUnit = "ng/m3"
     print("Zmiana")
     print(ts.values)
 

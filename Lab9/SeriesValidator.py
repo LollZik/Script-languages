@@ -21,8 +21,8 @@ class OutlierDetector(SeriesValidator):
         if mean is None or std is None:
             return []
 
-        anomalies = []
-        for dt, val in series[:]:
+        anomalies : list[str] = []
+        for dt, val in zip(series.dates, series.values):
             if val is not None:
                 if abs(val - mean) > self.k * std:
                     anomalies.append(f"Outlier: {val} at {dt}")
@@ -52,7 +52,7 @@ class ThresholdDetector(SeriesValidator):
 
     def analyze(self, series: 'TimeSeries') -> list[str]:
         anomalies : list[str]= []
-        for dt, val in series[:]:
+        for dt, val in zip(series.dates, series.values):
             if val is not None and val > self.threshold:
                 anomalies.append(f"Threshold exceeded: {val} at {dt}")
         return anomalies

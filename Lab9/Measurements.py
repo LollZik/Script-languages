@@ -4,7 +4,7 @@ import os
 import re
 import sys
 from collections import defaultdict
-from typing import Optional
+from typing import Optional, DefaultDict
 
 from TimeSeries import TimeSeries
 from SeriesValidator import SeriesValidator,ThresholdDetector, OutlierDetector, ZeroSpikeDetector
@@ -50,25 +50,25 @@ class Measurements:
             return
 
         with open(file_path, encoding='utf-8-sig') as f:
-            reader : csv.reader = csv.reader(f)
+            reader = csv.reader(f)
             next(reader)
             stations : list[str] = [s.strip() for s in next(reader)]
             params : list[str] = [p.strip() for p in next(reader)]
             avgs :list[str] = [a.strip() for a in next(reader)]
             next(reader)
             next(reader)
-            data : dict = defaultdict(lambda: ([], []))
+            data : DefaultDict = defaultdict(lambda: ([], []))
 
             for row in reader:
                 if not row or not row[0].strip():
                     continue
                 try:
-                    dt : datetime = datetime.datetime.strptime(row[0].strip(), '%d/%m/%y %H:%M')
+                    dt : datetime.datetime = datetime.datetime.strptime(row[0].strip(), '%d/%m/%y %H:%M')
                 except ValueError:
                     continue
                 for i in range(1, len(row)):
                     if stations:
-                        key = (stations, params, avgs)
+                        key = (stations[i], params[i], avgs[i])
                         data[key][0].append(dt)
                         data[key][1].append(parse_value(row[i]))
 
