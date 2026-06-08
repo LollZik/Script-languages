@@ -20,7 +20,7 @@ def parse_value(raw: str) -> Optional[float]:
 
 
 class Measurements:
-    def __init__(self, directory: str):
+    def __init__(self, directory: str) -> None:
         if not os.path.isdir(directory):
             raise NotADirectoryError(f"Path is not a directory: {directory!r}")
 
@@ -33,9 +33,9 @@ class Measurements:
             if re.match(r'^(\d{4})_(.+?)_(.+?)\.csv$', filename):
                 self.register_file(os.path.join(directory, filename))
 
-    def register_file(self, file_path: str):
+    def register_file(self, file_path: str) -> None:
         with open(file_path, encoding='utf-8-sig') as f:
-            rows = [next(csv.reader(f)) for _ in range(6)]
+            rows : list[list[str]] = [next(csv.reader(f)) for _ in range(6)]
 
         # Register each station in the file
         for i in range(1, len(rows[1])):
@@ -45,25 +45,25 @@ class Measurements:
                 if key not in self.registry:
                     self.registry[key] = (file_path, rows[4][i].strip())
 
-    def load_file(self, file_path: str):
+    def load_file(self, file_path: str) -> None:
         if file_path in self.loaded_files:
             return
 
         with open(file_path, encoding='utf-8-sig') as f:
-            reader = csv.reader(f)
+            reader : csv.reader = csv.reader(f)
             next(reader)
-            stations = [s.strip() for s in next(reader)]
-            params   = [p.strip() for p in next(reader)]
-            avgs     = [a.strip() for a in next(reader)]
+            stations : list[str] = [s.strip() for s in next(reader)]
+            params : list[str] = [p.strip() for p in next(reader)]
+            avgs :list[str] = [a.strip() for a in next(reader)]
             next(reader)
             next(reader)
-            data = defaultdict(lambda: ([], []))
+            data : dict = defaultdict(lambda: ([], []))
 
             for row in reader:
                 if not row or not row[0].strip():
                     continue
                 try:
-                    dt = datetime.datetime.strptime(row[0].strip(), '%d/%m/%y %H:%M')
+                    dt : datetime = datetime.datetime.strptime(row[0].strip(), '%d/%m/%y %H:%M')
                 except ValueError:
                     continue
                 for i in range(1, len(row)):
@@ -78,11 +78,11 @@ class Measurements:
 
         self.loaded_files.add(file_path)
 
-    def ensure_loaded(self, key: tuple):
+    def ensure_loaded(self, key: tuple) -> None:
         if key not in self.loaded and key in self.registry:
             self.load_file(self.registry[key][0])
 
-    def preload_all(self):
+    def preload_all(self) -> None:
         for file_path, _ in self.registry.values():
             self.load_file(file_path)
 

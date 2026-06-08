@@ -1,5 +1,5 @@
 class Station:
-    def __init__(self, station_code: str, station_name: str = "", voivodeship: str = "", city: str = "", address: str = ""):
+    def __init__(self, station_code: str, station_name: str = "", voivodeship: str = "", city: str = "", address: str = "") -> None:
         self.station_code = station_code
         self.station_name = station_name
         self.voivodeship = voivodeship

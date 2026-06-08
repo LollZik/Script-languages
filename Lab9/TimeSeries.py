@@ -9,7 +9,7 @@ unitDict = {
 
 class TimeSeries:
     def __init__(self, parameter_name: str, station_code: str, averaging_time: str,
-                 dates: List[datetime.datetime], values: List[Union[float, None]], unit: str):
+                 dates: List[datetime.datetime], values: List[Union[float, None]], unit: str) -> None:
         self.parameter_name = parameter_name
         self.station_code = station_code
         self.averaging_time = averaging_time
@@ -17,7 +17,7 @@ class TimeSeries:
         self.values = values
         self.unit = unit
 
-    def __getitem__(self, key: Union[slice, int, datetime.datetime, datetime.date]):
+    def __getitem__(self, key: Union[slice, int, datetime.datetime, datetime.date]) -> Union[tuple, float, list, None]:
         if isinstance(key, slice):
             return list(zip(self.dates[key], self.values[key]))
 
@@ -60,15 +60,15 @@ class TimeSeries:
 
 
     @property
-    def getUnit(self):
+    def getUnit(self) -> str:
         return self.unit
 
     @getUnit.setter
-    def setUnit(self, newUnit):
+    def setUnit(self, newUnit : str) -> None:
         if newUnit not in unitDict:
             raise ValueError("Wrong unit")
         else:
-            multiplier = unitDict[newUnit] - unitDict[self.unit]
+            multiplier : Union[int, float] = unitDict[newUnit] - unitDict[self.unit]
             self.unit = newUnit
             if multiplier != 0:
                 if multiplier > 0:
@@ -79,12 +79,12 @@ class TimeSeries:
                     if self.values[i] != None:
                         self.values[i] = self.values[i] * multiplier
 
-    def __add__(self, other):
+    def __add__(self, other : 'TimeSeries') -> 'TimeSeries':
         if isinstance(other, TimeSeries):
             if self.parameter_name == other.parameter_name and self.station_code == other.station_code and self.averaging_time == other.averaging_time:
-                date = self.dates + other.dates
-                value = self.values + other.values
-                ts = TimeSeries(parameter_name=self.parameter_name, station_code=self.station_code,
+                date : List[datetime.datetime] = self.dates + other.dates
+                value : List[Union[float, None]] = self.values + other.values
+                ts : 'TimeSeries' = TimeSeries(parameter_name=self.parameter_name, station_code=self.station_code,
                                 averaging_time=self.averaging_time, dates=date, values=value, unit=self.unit)
                 return ts
             else:

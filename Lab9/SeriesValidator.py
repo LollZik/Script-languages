@@ -1,7 +1,7 @@
 import abc
 import datetime
 from TimeSeries import TimeSeries
-
+from typing import Union
 
 class SeriesValidator(metaclass=abc.ABCMeta):
 
@@ -11,12 +11,12 @@ class SeriesValidator(metaclass=abc.ABCMeta):
 
 
 class OutlierDetector(SeriesValidator):
-    def __init__(self, k: float):
+    def __init__(self, k: float) -> None:
         self.k = k
 
     def analyze(self, series: 'TimeSeries') -> list[str]:
-        mean = series.mean
-        std = series.stddev
+        mean : Union[float, None] = series.mean
+        std : Union[float, None] = series.stddev
 
         if mean is None or std is None:
             return []
@@ -31,8 +31,8 @@ class OutlierDetector(SeriesValidator):
 
 class ZeroSpikeDetector(SeriesValidator):
     def analyze(self, series: 'TimeSeries') -> list[str]:
-        anomalies = []
-        count = 0
+        anomalies : list[str] = []
+        count : int = 0
 
         for i, val in enumerate(series.values):
             if val == 0 or val is None:
@@ -47,11 +47,11 @@ class ZeroSpikeDetector(SeriesValidator):
 
 
 class ThresholdDetector(SeriesValidator):
-    def __init__(self, threshold: float):
+    def __init__(self, threshold: float) -> None:
         self.threshold = threshold
 
     def analyze(self, series: 'TimeSeries') -> list[str]:
-        anomalies = []
+        anomalies : list[str]= []
         for dt, val in series[:]:
             if val is not None and val > self.threshold:
                 anomalies.append(f"Threshold exceeded: {val} at {dt}")
