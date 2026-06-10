@@ -53,7 +53,8 @@ def test_timeseries_getitem_date_exists(sample_ts):
 def test_timeseries_getitem_date_missing(sample_ts):
     search_date = datetime.date(2025, 5, 5)
     with pytest.raises(KeyError):
-        _ = sample_ts[search_date]
+        result = sample_ts[search_date]
+    #assert result == []
 
 def test_timeseries_mean_stddev_complete(sample_ts):
     assert sample_ts.mean == 30.0
@@ -113,15 +114,20 @@ def mock_measurements(sample_ts):
     return m
 
 
-@pytest.mark.parametrize("validator_object, expected_messages", [
-    (ThresholdDetector(threshold=35.0), 2),
-    (ZeroSpikeDetector(), 0),
-    (OutlierDetector(k=5.0), 0),
-    (SimpleReporter(), 1)
+@pytest.mark.parametrize("validator_object, expected_key, expected_substrings", [
+    (ThresholdDetector(threshold=35.0),"ThresholdDetector/ST1/PM10",["Threshold exceeded: 40.0", "Threshold exceeded: 50.0"]),
+    (ZeroSpikeDetector(),None,[]),
+    (OutlierDetector(k=5.0),None,[]),
+    (SimpleReporter(),"SimpleReporter/ST1/PM10",["Info: PM10 at ST1 has mean = 30.0000"])
 ])
-def test_detect_all_anomalies(mock_measurements, validator_object, expected_messages):
+def test_detect_all_anomalies(mock_measurements, validator_object, expected_key, expected_substrings):
     validators = [validator_object]
     results = mock_measurements.detect_all_anomalies(validators, preload=False)
-    total_anomalies_count = sum(len(messages) for messages in results.values())
-
-    assert total_anomalies_count == expected_messages
+    if expected_key is None:
+        assert len(results) == 0
+    else:
+        assert expected_key in results
+        messages = results[expected_key]
+        assert len(messages) == len(expected_substrings)
+        for expected_str in expected_substrings:
+            assert any(expected_str in msg for msg in messages)
