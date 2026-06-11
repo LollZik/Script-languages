@@ -19,7 +19,11 @@ class TimeSeries:
 
     def __getitem__(self, key: Union[slice, int, datetime.datetime, datetime.date]) -> Union[tuple, float, list, None]:
         if isinstance(key, slice):
-            return list(zip(self.dates[key], self.values[key]))
+            if not list(zip(self.dates[key], self.values[key])) and key.start != key.stop:
+                raise ValueError(f"Brak podanego slice")
+            else:
+                return list(zip(self.dates[key], self.values[key]))
+
 
         elif isinstance(key, int):
             return self.dates[key], self.values[key]

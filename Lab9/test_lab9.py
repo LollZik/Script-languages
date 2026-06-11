@@ -45,6 +45,10 @@ def test_timeseries_getitem_int(sample_ts, sample_dates):
 def test_timeseries_getitem_slice(sample_ts, sample_dates):
     assert sample_ts[1:3] == [(sample_dates[1], 20.0), (sample_dates[2], 30.0)]
 
+def test_timeseries_getitem_nonexistent_slice(sample_ts, sample_dates):
+    with pytest.raises(ValueError):
+     _ = sample_ts[20:23]
+
 def test_timeseries_getitem_date_exists(sample_ts):
     search_date = datetime.date(2023, 1, 1)
     result = sample_ts[search_date]
