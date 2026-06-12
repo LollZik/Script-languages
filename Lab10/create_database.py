@@ -6,6 +6,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     db_name = sys.argv[1]
+    if not db_name.endswith('.sqlite3'):
+        db_name += '.sqlite3'
 
     try:
         manager = DatabaseManager(db_name)

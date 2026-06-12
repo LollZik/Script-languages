@@ -83,57 +83,27 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute(query_stops)
             cursor.execute(query_routes)
+            cursor.execute(query_calendar)
             cursor.execute(query_trips)
             cursor.execute(query_stop_times)
-            cursor.execute(query_calendar)
             conn.commit()
         conn.close()
 
-    # def add_photo(self, original_name, stored_name, tags):
-    #     upload_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    #
-    #     conn = self.get_connection()
-    #     cursor = conn.cursor()
-    #
-    #     try:
-    #         cursor.execute(
-    #             """
-    #             INSERT INTO photos (original_name, stored_name, upload_date)
-    #             VALUES (?, ?, ?)
-    #         """,
-    #             (original_name, stored_name, upload_date),
-    #         )
-    #         photo_id = cursor.lastrowid
-    #
-    #         for tag in tags:
-    #             tag = tag.lower().strip()
-    #             if not tag:
-    #                 continue
-    #
-    #             cursor.execute(
-    #                 "INSERT OR IGNORE INTO tags (tag_name) VALUES (?)", (tag,)
-    #             )
-    #
-    #             cursor.execute(
-    #                 "SELECT id FROM tags WHERE tag_name = ?", (tag,)
-    #             )
-    #             tag_id = cursor.fetchone()["id"]
-    #
-    #             cursor.execute(
-    #                 """
-    #                 INSERT OR IGNORE INTO photo_tags (photo_id, tag_id)
-    #                 VALUES (?, ?)
-    #             """,
-    #                 (photo_id, tag_id),
-    #             )
-    #
-    #         conn.commit()
-    #         return photo_id
-    #
-    #     except sqlite3.Error as e:
-    #         conn.rollback()
-    #         print(f"Błąd bazy danych podczas dodawania zdjęcia: {e}")
-    #         raise e
-    #     finally:
-    #         conn.close()
 
+    def _execute_insert(self, query, data):
+        conn = self.get_connection()
+        try:
+            with conn:
+                conn.cursor().executemany(query, data)
+        finally:
+            conn.close()
+
+
+    def insert_data(self, table_name, columns, data):
+        if not data:
+            return
+        columns_str = ', '.join(columns)
+        questionmarks = ', '.join(['?'] * len(columns))
+        query = f"INSERT INTO {table_name} ({columns_str}) VALUES ({questionmarks})"
+
+        self._execute_insert(query, data)
