@@ -1,0 +1,139 @@
+import sqlite3
+
+
+class DatabaseManager:
+    def __init__(self, db_path):
+        self.db_path = db_path
+
+    def get_connection(self):
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = (
+            sqlite3.Row
+        )
+        return conn
+
+    def create_tables(self):
+        query_stops = """
+        CREATE TABLE IF NOT EXISTS stops (
+            stop_id INTEGER PRIMARY KEY,
+            stop_code INTEGER NOT NULL,
+            stop_name TEXT NOT NULL,
+            stop_lat REAL NOT NULL,
+            stop_lon REAL NOT NULL
+        );
+        """
+
+        query_routes = """
+        CREATE TABLE IF NOT EXISTS routes (
+            route_id TEXT PRIMARY KEY,
+            agency_id INTEGER NOT NULL,
+            route_short_name TEXT NOT NULL,
+            route_long_name TEXT,
+            route_desc TEXT NOT NULL,
+            route_type INTEGER NOT NULL,
+            route_type2_id INTEGER NOT NULL,
+            valid_from TEXT NOT NULL,
+            valid_until TEXT NOT NULL
+        );
+        """
+
+        query_trips = """
+        CREATE TABLE IF NOT EXISTS trips (
+            trip_id TEXT PRIMARY KEY,
+            route_id TEXT NOT NULL,
+            service_id TEXT NOT NULL,
+            trip_headsign TEXT,
+            direction_id INTEGER,
+            shape_id TEXT,
+            brigade_id TEXT,
+            FOREIGN KEY (route_id) REFERENCES routes(route_id),
+            FOREIGN KEY (service_id) REFERENCES calendar(service_id)
+        );
+        """
+
+        query_stop_times = """
+        CREATE TABLE IF NOT EXISTS stop_times (
+            trip_id TEXT NOT NULL,
+            arrival_time TEXT NOT NULL,
+            departure_time TEXT NOT NULL,
+            stop_id INTEGER NOT NULL,
+            stop_sequence INTEGER NOT NULL,
+            FOREIGN KEY (trip_id) REFERENCES trips(trip_id),
+            FOREIGN KEY (stop_id) REFERENCES stops(stop_id),
+            PRIMARY KEY (trip_id, stop_sequence)
+        );
+        """
+
+        query_calendar = """
+        CREATE TABLE IF NOT EXISTS calendar (
+            service_id TEXT PRIMARY KEY,
+            monday INTEGER NOT NULL,
+            tuesday INTEGER NOT NULL,
+            wednesday INTEGER NOT NULL,
+            thursday INTEGER NOT NULL,
+            friday INTEGER NOT NULL,
+            saturday INTEGER NOT NULL,
+            sunday INTEGER NOT NULL,
+            start_date TEXT NOT NULL,
+            end_date TEXT NOT NULL
+        );
+        """
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query_stops)
+            cursor.execute(query_routes)
+            cursor.execute(query_trips)
+            cursor.execute(query_stop_times)
+            cursor.execute(query_calendar)
+            conn.commit()
+        conn.close()
+
+    # def add_photo(self, original_name, stored_name, tags):
+    #     upload_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    #
+    #     conn = self.get_connection()
+    #     cursor = conn.cursor()
+    #
+    #     try:
+    #         cursor.execute(
+    #             """
+    #             INSERT INTO photos (original_name, stored_name, upload_date)
+    #             VALUES (?, ?, ?)
+    #         """,
+    #             (original_name, stored_name, upload_date),
+    #         )
+    #         photo_id = cursor.lastrowid
+    #
+    #         for tag in tags:
+    #             tag = tag.lower().strip()
+    #             if not tag:
+    #                 continue
+    #
+    #             cursor.execute(
+    #                 "INSERT OR IGNORE INTO tags (tag_name) VALUES (?)", (tag,)
+    #             )
+    #
+    #             cursor.execute(
+    #                 "SELECT id FROM tags WHERE tag_name = ?", (tag,)
+    #             )
+    #             tag_id = cursor.fetchone()["id"]
+    #
+    #             cursor.execute(
+    #                 """
+    #                 INSERT OR IGNORE INTO photo_tags (photo_id, tag_id)
+    #                 VALUES (?, ?)
+    #             """,
+    #                 (photo_id, tag_id),
+    #             )
+    #
+    #         conn.commit()
+    #         return photo_id
+    #
+    #     except sqlite3.Error as e:
+    #         conn.rollback()
+    #         print(f"Błąd bazy danych podczas dodawania zdjęcia: {e}")
+    #         raise e
+    #     finally:
+    #         conn.close()
+
