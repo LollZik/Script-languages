@@ -12,7 +12,8 @@ def load_table(zip_file, filename, table_name, columns, manager, batch_size=1000
 
         batch = []
         for row in reader:
-            batch.append(tuple(row.get(col, '') for col in columns))
+            clean_tuple = tuple((row.get(col) if row.get(col) != '' else None) for col in columns)
+            batch.append(clean_tuple)
 
             if len(batch) >= batch_size:
                 manager.insert_data(table_name, columns, batch)

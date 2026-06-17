@@ -41,11 +41,11 @@ class DatabaseManager:
         CREATE TABLE IF NOT EXISTS trips (
             trip_id TEXT PRIMARY KEY,
             route_id TEXT NOT NULL,
-            service_id TEXT NOT NULL,
+            service_id INTEGER NOT NULL,
             trip_headsign TEXT,
             direction_id INTEGER,
             shape_id TEXT,
-            brigade_id TEXT,
+            brigade_id INTEGER,
             FOREIGN KEY (route_id) REFERENCES routes(route_id),
             FOREIGN KEY (service_id) REFERENCES calendar(service_id)
         );
@@ -66,7 +66,7 @@ class DatabaseManager:
 
         query_calendar = """
         CREATE TABLE IF NOT EXISTS calendar (
-            service_id TEXT PRIMARY KEY,
+            service_id INTEGER PRIMARY KEY,
             monday INTEGER NOT NULL,
             tuesday INTEGER NOT NULL,
             wednesday INTEGER NOT NULL,
